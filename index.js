@@ -47,55 +47,62 @@ const { JSDOM } = require('jsdom');
 
 
         const anclas = [];
+        const names = [];
 
         let indexPage = await getPage("https://www.classcentral.com");
         let indexDOM = new JSDOM(indexPage);
 
         indexDOM.window.document.querySelectorAll("a").forEach((e) => {
-            if(e.href.startsWith("/") && e.href != '/' || e.href.startsWith("https://www.classcentral.com")){
-                if(e.href.startsWith("/") && !anclas.includes(e.href) && !e.href.includes("cdn")){
-                    anclas.push(e.href);
-                    let name2 = "";
-                    for(let i = 0; i < e.href.length; i++){
-                        if(e.href[i] == '/'){
-                            console.log(`Char ${i+1} : ${e.href[i]}`);
-                            name2 += "-";
-                        }
-                        else{
-                            name2 += e.href[i];
-                        }
-                        console.log(`Name 2 en vuelta ${i}: ${name2}`);
+            if(e.href.startsWith("/") && e.href != '/' && !anclas.includes(e.href) && !e.href.includes("cdn")){
+                anclas.push(e.href);
+                let name2 = "";
+                for(let i = 0; i < e.href.length; i++){
+                    if(e.href[i] === '/'){
+                        console.log(`Char ${i+1} : ${e.href[i]}`);
+                        name2 += "-";
                     }
-                    e.href=name2+".html";
-                }
-                else if(e.href.startsWith("https://www.classcentral.com") && !anclas.includes(e.href.slice(28, e.href.length - 1)) && !e.href.includes("cdn")){
-                    let url = e.href.slice(28, e.href.length - 1);
-                    anclas.push(url);
-                    let name2 = "";
-                    for(let i = 0; i < url.length; i++){
-                        if(url[i] == '/'){
-                            console.log(`Char ${i+1} : ${url[i]}`);
-                            name2 += "-";
-                        }
-                        else{
-                            name2 += url[i];
-                        }
-                        console.log(`Name 2 en vuelta ${i}: ${name2}`);
+                    else{
+                        name2 += e.href[i];
                     }
-                    e.href=name2+".html";
+                    console.log(`Name 2 en vuelta ${i}: ${name2}`);
                 }
+                names.push(name2);
+                e.href=name2+".html";
+            }
+            else if(e.href.startsWith("https://www.classcentral.com") && !anclas.includes(e.href.slice(28, e.href.length - 1)) && !e.href.includes("cdn")){
+                let url = e.href.slice(28, e.href.length - 1);
+                anclas.push(url);
+                let name2 = "";
+                for(let i = 0; i < url.length; i++){
+                    if(url[i] === '/'){
+                        console.log(`Char ${i+1} : ${url[i]}`);
+                        name2 += "-";
+                    }
+                    else{
+                        name2 += url[i];
+                    }
+                    console.log(`Name 2 en vuelta ${i}: ${name2}`);
+                }
+                names.push(name2);
+                e.href=name2+".html";
             }
         });
+
+        await fs.writeFile(`views/index.html`, indexDOM.serialize(), {
+            mode : 4
+        },(err)=>{ err ? console.log(err) : null});
 
         for (const link of anclas) {
             await getPage(link);
         }
 
+        for(const link of names) {
+            await fs.appendFile("names.txt",link + "\n")
+        }
+
         console.log(anclas.length);
 
-        await fs.writeFile(`views/index.html`, indexDOM.serialize(), {
-            mode : 4
-        },(err)=>{ err ? console.log(err) : null});
+        
         
         process.exit(1);
     }
